@@ -22,6 +22,14 @@ bot_settings = {
     "nightmare": {"speed": 14, "delay": 0},
 }
 
+ball_speeds = {
+    "easy": 3,
+    "medium": 4,
+    "hard": 6,
+    "extreme": 8,
+    "nightmare": 10
+}
+
 class GameSprite(pygame.sprite.Sprite):
     def __init__(self, x, y, width, height, speed, color):
         super().__init__()
@@ -43,15 +51,21 @@ class Ball(GameSprite):
         self.speed_x = speed_x
         self.speed_y = speed_y
 
+    def reset_ball(self, difficulty):
+        speed = ball_speeds.get(difficulty, 4)
+        self.speed_x = speed if self.speed_x > 0 else -speed
+        self.speed_y = speed if self.speed_y > 0 else -speed
+        self.rect.center = (340, 240)
+
     def action(self):
         self.rect.x += self.speed_x
         self.rect.y += self.speed_y
 
         if self.rect.y <= 0:
-            self.speed_y *= -1
+            self.speed_y = -self.speed_y
 
         if self.rect.y >= 500 - self.rect.height:
-            self.speed_y *= -1
+            self.speed_y = -self.speed_y
 
 class LeftBar(GameSprite):
     def action(self):
@@ -106,7 +120,6 @@ def draw_difficulty():
         window.blit(render, (180, 180 + i * 40))
 
 game = True
-game_over = False
 loser_text = ""
 
 while game:
@@ -118,7 +131,7 @@ while game:
             if e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_1:
                     mode = "pvp"
-                    game_state = "playing"
+                    game_state = "difficulty"
                 if e.key == pygame.K_2:
                     mode = "bot"
                     game_state = "difficulty"
@@ -135,7 +148,9 @@ while game:
                     difficulty = "extreme"
                 elif e.key == pygame.K_5:
                     difficulty = "nightmare"
+
                 if difficulty:
+                    ball.reset_ball(difficulty)
                     game_state = "playing"
 
     window.fill(background_color)
@@ -152,10 +167,10 @@ while game:
         ball.action()
 
         if pygame.sprite.collide_rect(ball, left_bar):
-            ball.speed_x *= -1
+            ball.speed_x = -ball.speed_x
 
         if pygame.sprite.collide_rect(ball, right_bar):
-            ball.speed_x *= -1
+            ball.speed_x = -ball.speed_x
 
         if ball.rect.x <= 0:
             game_state = "gameover"
